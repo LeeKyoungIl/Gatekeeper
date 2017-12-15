@@ -1,0 +1,30 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="comparison target servers" field="targetServer">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="log server host or url" field="logServerHost">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="ssh private key">
+    <f:textbox field="prvkey" />
+  </f:entry>
+  <f:entry title="user id">
+    <f:textbox field="userId" />
+  </f:entry>
+  <f:block>
+    <table>
+      <f:optionalBlock field="userInfo" title="Connect to the server using your ID and password." checked="${instance.userInfo != null}">
+        <f:entry title="user password">
+          <f:password field="password" value="${instance.userInfo.password}" />
+        </f:entry>
+      </f:optionalBlock>
+    </table>
+  </f:block>
+  <f:entry title="logfile name (full path)" field="logfileName">
+        <f:textbox />
+    </f:entry>
+  <f:entry title="exclude url pattern" field="excludePattern">
+    <f:textbox />
+  </f:entry>
+</j:jelly>
