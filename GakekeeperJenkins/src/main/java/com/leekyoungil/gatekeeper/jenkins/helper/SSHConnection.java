@@ -1,14 +1,15 @@
-package com.kakaocorp.buy.illuminati.jenkins.helper;
+package com.leekyoungil.gatekeeper.jenkins.helper;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
-import com.kakaocorp.buy.illuminati.jenkins.model.UserInfo;
+import com.leekyoungil.gatekeeper.jenkins.model.UserInfo;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,12 +86,14 @@ public class SSHConnection {
             channelExec.setCommand("sh "+scriptFileName);
             channelExec.connect();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
             String line;
 
             while ((line = reader.readLine()) != null) {
                 result.add(line);
             }
+
+            reader.close();
 
             int exitStatus = channelExec.getExitStatus();
 

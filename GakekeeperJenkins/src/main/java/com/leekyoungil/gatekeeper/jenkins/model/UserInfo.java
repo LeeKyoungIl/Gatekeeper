@@ -1,4 +1,4 @@
-package com.kakaocorp.buy.illuminati.jenkins.model;
+package com.leekyoungil.gatekeeper.jenkins.model;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 

@@ -1,8 +1,8 @@
-package com.kakaocorp.buy.illuminati.jenkins;
+package com.leekyoungil.gatekeeper.jenkins;
 
-import com.kakaocorp.buy.illuminati.jenkins.helper.SSHConnection;
-import com.kakaocorp.buy.illuminati.jenkins.helper.ShellExecutor;
-import com.kakaocorp.buy.illuminati.jenkins.model.UserInfo;
+import com.leekyoungil.gatekeeper.jenkins.helper.SSHConnection;
+import com.leekyoungil.gatekeeper.jenkins.helper.ShellExecutor;
+import com.leekyoungil.gatekeeper.jenkins.model.UserInfo;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -28,16 +28,16 @@ public class GatekeeperExecutor extends Builder implements SimpleBuildStep {
     private final String excludePattern;
     private final String logfileName;
     private final String userId;
-    private final String prvkey;
+    private final String privateSSHKey;
     private final UserInfo userInfo;
 
     @DataBoundConstructor
-    public GatekeeperExecutor(String targetServer, String logServerHost, String excludePattern, String logfileName, String userId, String prvkey, UserInfo userInfo) {
+    public GatekeeperExecutor(String targetServer, String logServerHost, String excludePattern, String logfileName, String userId, String privateSSHKey, UserInfo userInfo) {
         this.targetServer = targetServer;
         this.logServerHost = logServerHost;
         this.logfileName = logfileName;
         this.userId = userId;
-        this.prvkey = prvkey;
+        this.privateSSHKey = privateSSHKey;
         this.userInfo = userInfo;
 
         if (excludePattern == null) {
@@ -50,8 +50,8 @@ public class GatekeeperExecutor extends Builder implements SimpleBuildStep {
     public String getUserId() {
         return this.userId;
     }
-    public String getPrvkey() {
-        return this.prvkey;
+    public String getPrivateSSHKey() {
+        return this.privateSSHKey;
     }
     public String getTargetServer() {
         return this.targetServer;
@@ -73,8 +73,8 @@ public class GatekeeperExecutor extends Builder implements SimpleBuildStep {
     public void perform(Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener) {
         SSHConnection sshConnection = new SSHConnection(this.logServerHost, 22, this.userId);
 
-        if (this.prvkey != null) {
-            sshConnection.setPrvkey(this.prvkey);
+        if (this.privateSSHKey != null) {
+            sshConnection.setPrvkey(this.privateSSHKey);
         } else if (this.userInfo != null && this.getUserInfo().getPassword() != null) {
             sshConnection.setUserInfo(this.userInfo);
         } else {
@@ -85,14 +85,14 @@ public class GatekeeperExecutor extends Builder implements SimpleBuildStep {
         boolean isConnected = sshConnection.checkConnection();
 
         if (isConnected) {
-            List<String> commandResult = sshConnection.executeFile("/home/"+this.userId+"/scripts/illuminatiGetSample.sh", listener.getLogger());
+            ShellExecutor shellExecutor = new ShellExecutor(listener.getLogger());
 
-            if (commandResult.size() > 0) {
-                ShellExecutor shellExecutor = new ShellExecutor(listener.getLogger());
+            shellExecutor.execute("rsync -chavzP --stats "+this.userId+"@"+this.logServerHost+":/home/"+this.userId+"/gatekeeper/"+logfileName+" /home/"+this.userId+"/gatekeeper");
+            shellExecutor.execute("/home/"+this.userId+"/gatekeeper/gatekeeperParseCore /home/"+this.userId+"/gatekeeper/ "+logfileName+" "+this.targetServer+" "+this.excludePattern);
 
-                shellExecutor.execute("rsync -chavzP --stats "+this.userId+"@"+this.logServerHost+":/home/"+this.userId+"/illuminati/"+logfileName+" /home/"+this.userId+"/illuminati");
-                shellExecutor.execute("/home/"+this.userId+"/illuminati/illuminatiParseCore /home/"+this.userId+"/illuminati/ "+logfileName+" "+this.targetServer+" "+this.excludePattern);
-            } else {
+            List<String> commandResult = sshConnection.executeFile("/home/"+this.userId+"/scripts/gatekeeperGetSampleCheck.sh", listener.getLogger());
+
+            if (commandResult.size() == 0) {
                 listener.getLogger().println("Failed to copy a log file");
             }
         } else {
@@ -146,7 +146,7 @@ public class GatekeeperExecutor extends Builder implements SimpleBuildStep {
         }
 
         public String getDisplayName() {
-            return "IlluminatiExecutor";
+            return "GatekeeperExecutor";
         }
 
         @Override
